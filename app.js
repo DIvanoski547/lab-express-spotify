@@ -13,11 +13,12 @@ app.set('views', __dirname + '/views');
 app.use(express.static(__dirname + '/public'));
 
 const spotifyApi = new SpotifyWebApi({
-    clientId: 'c60f0049bfc041a5a26d2fb2e1cef823',
-    clientSecret: '75daf3ab6adc4ff88c150744a952a965',
-  });
+  clientId: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET
+});
 
-  spotifyApi
+// Retrieve an access token
+spotifyApi
   .clientCredentialsGrant()
   .then(data => spotifyApi.setAccessToken(data.body['access_token']))
   .catch(error => console.log('Something went wrong when retrieving an access token', error));
@@ -37,7 +38,30 @@ app.get('/artist-search', (req, res) => {
     res.render('artist-search-results', {artists})
   })
   .catch(err => console.log('The error while searching artists occurred: ', err));
-})
+});
+
+app.get('/albums/:artistId', (req, res) => {
+  const artistId = req.params.artistId;
+  spotifyApi
+    .getArtistAlbums(artistId)
+    .then(data => {
+      const albums = data.body.items;
+      res.render('albums', { albums });
+    })
+    .catch(err => console.log('Error fetching artist albums: ', err));
+});
+
+app.get('/tracks/:albumId', (req, res) => {
+  const albumId = req.params.albumId;
+  spotifyApi
+    .getAlbumTracks(albumId)
+    .then(data => {
+      console.log('Received data from the API:', data.body);
+      const tracks = data.body.items;
+      res.render('tracks', { tracks });
+    })
+    .catch(err => console.log('Error fetching album tracks: ', err));
+  });
 
 
 
